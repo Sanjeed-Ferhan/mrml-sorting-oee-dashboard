@@ -128,6 +128,7 @@
       <div class="tgt" id="kOt">vs 75% target</div>
       <div class="vs up" id="kOd">▲ 1.7 pts</div>
       <div class="bar"><i id="kOb" style="width:57.2%;background:var(--red)"></i></div>
+      <div class="tgt" id="kProd" style="margin-top:6px">Out —</div>
     </div>
   </div>
 
@@ -414,6 +415,7 @@ function renderPeriod(key){
   oel.className = 'vs '+(ogap<=0?'up':'down');
   document.getElementById('kOb').style.width = Math.max(0,Math.min(100,p.kpi.OEE))+'%';
   document.getElementById('kOb').style.background = ogap<=0 ? 'var(--green)' : 'var(--red)';
+  var _kp=document.getElementById('kProd'); if(_kp) _kp.textContent = (p.prod? p.prod.text : 'Out —');
   // time
   document.getElementById('timeTitle').textContent = p.timeTitle;
   document.getElementById('donut').style.background = `conic-gradient(var(--green) 0 ${p.time.availPct}%, var(--red) ${p.time.availPct}% 100%)`;
@@ -670,6 +672,8 @@ function buildDashboard(prTexts, bdTexts, cfg){
     var scopeU = isDayScope? du : (MON[lastDay.getMonth()].toUpperCase()+" "+lastDay.getFullYear()+" MTD");
     var totNpt = r0(a.npt);
     var note = (setBd.length? "" : "No unplanned breakdown events recorded in the Breakdown tab for this period.");
+    var _crushTot=0; for(var _i=0;_i<set.length;_i++){_crushTot+=set[_i].crush;}
+    var prodText = cfg.cardMetric==="crush" ? ("Crushing input "+r0(_crushTot).toLocaleString()+" "+cfg.units) : ("Out "+r0(a.out).toLocaleString()+"/"+r0(a.target).toLocaleString()+" "+cfg.units+" ("+(a.target>0? r1(a.out/a.target*100):0)+"%)");
     return {
       basis: (isDayScope? "Basis: single day \u2014 "+du : "Basis: 01\u2013"+pad2(lastDay.getDate())+" "+MON[lastDay.getMonth()]+" "+lastDay.getFullYear()+" month-to-date"),
       kpiTitle:"CURRENT SCENARIO \u2014 OEE ("+(isDayScope? du.toUpperCase() : MON[lastDay.getMonth()].toUpperCase()+" "+lastDay.getFullYear()+" MTD")+")",
@@ -693,6 +697,7 @@ function buildDashboard(prTexts, bdTexts, cfg){
       shiftTitle:"Shift OEE \u2014 "+scope,
       shifts:shifts,
       quant: r0(a.npt).toLocaleString()+" min unplanned (NPT) "+(isDayScope?"on "+d:"this month")+(bestShift?(". Best shift "+bestShift.n.replace("Shift ","")+" ("+bestShift.v+"%)."):"")+" Constraint: "+worst.n+".",
+      prod:{text:prodText},
       opp:{ rows:oppo.rows, totalMin:oppo.totalMin, totalMT:oppo.totalMT, plannedMin:0, plannedMT:0,
         note:"Opportunity loss = NPT min \u00f7 ideal cycle time (avg min/"+cfg.units+") \u2192 <b>~"+oppo.totalMT.toLocaleString()+" "+cfg.units+"</b> lost "+(isDayScope?"on "+d:"this month")+"." }
     };
