@@ -352,7 +352,7 @@ function factorBoard(arr){
     `<div class="muted" style="font-size:10.5px;margin-top:8px;border-top:1px solid #e2e8e7;padding-top:6px">${note}</div>`;
 }
 function shiftBoard(arr){
-  const best = arr.reduce((a,b)=>b.v>a.v?b:a);
+  const best = arr.length? arr.reduce((a,b)=>b.v>a.v?b:a) : {n:"\u2014",v:0};
   document.getElementById('shifts').innerHTML = arr.map(s=>{
     const c = color(s.v), w = Math.max(0, Math.min(100, s.v));
     return `<div style="margin:9px 0">
@@ -442,8 +442,14 @@ function renderPeriod(key){
   document.getElementById('boardNote').innerHTML = p.boardNote;
   shiftBoard(p.shifts);
   document.getElementById('quant').innerHTML = p.quant;
-  document.getElementById('oppTitle').textContent = 'Opportunity Loss — downtime (NPT) time ('+(key==='day'?'12-Oct-2026':'Oct 2026 MTD')+')';
+  document.getElementById('oppTitle').textContent = 'Opportunity Loss — downtime (NPT) time ('+p.scopeLabel+')';
   oppCard(p.opp);
+  if(p.empty){
+    ["kA","kP","kQ","kO"].forEach(function(id){var e=document.getElementById(id); if(e) e.textContent="\u2014";});
+    var _kob=document.getElementById("kOb"); if(_kob){_kob.style.width="0%";_kob.style.background="#e2e8e7";}
+    var _kpe=document.getElementById("kProd"); if(_kpe) _kpe.textContent="No data recorded for "+p.scopeLabel;
+    var _mb=document.getElementById("millBoard"); if(_mb) _mb.innerHTML="<div class=\"muted\" style=\"padding:8px 0\">No data recorded for "+p.scopeLabel+".</div>";
+  }
 }
 function trend(){
   const W=980,H=230,padL=44,padR=44,padT=16,padB=34;
@@ -586,11 +592,7 @@ function buildDashboard(prTexts, bdTexts, cfg){
     }
   }
   if(!recs.length) return null;
-  var _n=new Date(); var todayStart=new Date(_n.getFullYear(),_n.getMonth(),_n.getDate());
-  var lastDay=null;
-  for(var k=0;k<recs.length;k++){ if(recs[k].out>0 && recs[k].d<todayStart && (!lastDay || recs[k].d>lastDay)) lastDay=recs[k].d; }
-  if(!lastDay){ for(var k3=0;k3<recs.length;k3++){ if(recs[k3].out>0 && (!lastDay || recs[k3].d>lastDay)) lastDay=recs[k3].d; } }
-  if(!lastDay){ lastDay=recs[0].d; for(var k4=1;k4<recs.length;k4++){ if(recs[k4].d>lastDay) lastDay=recs[k4].d; } }
+  var _n=new Date(); var lastDay=new Date(_n.getFullYear(),_n.getMonth(),_n.getDate()); lastDay.setDate(lastDay.getDate()-1);
   var monthStart=new Date(lastDay.getFullYear(), lastDay.getMonth(), 1);
   var isDay=function(r){return key(r.d)===key(lastDay);};
   var isMtd=function(r){return r.d>=monthStart && r.d<=lastDay;};
@@ -675,6 +677,7 @@ function buildDashboard(prTexts, bdTexts, cfg){
     var _crushTot=0; for(var _i=0;_i<set.length;_i++){_crushTot+=set[_i].crush;}
     var prodText = cfg.cardMetric==="crush" ? ("Crushing input "+r0(_crushTot).toLocaleString()+" "+cfg.units) : ("Out "+r0(a.out).toLocaleString()+"/"+r0(a.target).toLocaleString()+" "+cfg.units+" ("+(a.target>0? r1(a.out/a.target*100):0)+"%)");
     return {
+      empty: set.length===0, scopeLabel: scope,
       basis: (isDayScope? "Basis: single day \u2014 "+du : "Basis: 01\u2013"+pad2(lastDay.getDate())+" "+MON[lastDay.getMonth()]+" "+lastDay.getFullYear()+" month-to-date"),
       kpiTitle:"CURRENT SCENARIO \u2014 OEE ("+(isDayScope? du.toUpperCase() : MON[lastDay.getMonth()].toUpperCase()+" "+lastDay.getFullYear()+" MTD")+")",
       kpi:{A:r1(a.A*100),P:r1(a.P*100),Q:r1(a.Q*100),OEE:r1(a.OEE*100)},
